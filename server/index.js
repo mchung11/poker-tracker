@@ -33,6 +33,12 @@ app.post('/api/sessions/:id/players', (req, res) => {
   res.json({ id: result.lastInsertRowid, sessionId, name });
 });
 
+app.get('/api/sessions/:id/players', (req, res) => {
+  const sessionId = req.params.id;
+  const players = db.prepare('SELECT * FROM players WHERE session_id = ?').all(sessionId);
+  res.json(players);
+});
+
 app.post('/api/players/:id/buyins', (req, res) => {
   const playerId = req.params.id;
   const { amount } = req.body;
