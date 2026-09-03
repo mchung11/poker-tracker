@@ -44,6 +44,28 @@ app.post('/api/players/:id/cashout', (req, res) => {
   res.json({ id: result.lastInsertRowid, playerId, amount });
 });
 
+const calculateSettlements = require('./utils/settlements');
+
+app.get('/api/sessions/:id/settle', (req, res) => {
+  const sessionId = req.params.id;
+
+  const players = db.prepare('SELECT * FROM players WHERE session_id = ?').all(sessionId);
+
+  const playerBalances = players.map(player => {
+    const buyInsResult = db.prepare('SELECT SUM(amount) as total FROM buy_ins WHERE player_id = ?').get(player.id);
+    const cashOutResult = db.prepare('SELECT SUM(amount) as total FROM cash_outs WHERE player_id = ?').get(player.id);
+
+    const totalBuyIns = buyInsResult.total || 0;
+    const totalCashOut = cashOutResult.total || 0;
+    const net = totalCashOut - totalBuyIns;
+
+    return { name: player.name, net };
+  });
+
+  const transactions = calculateSettlements(playerBalances);
+  res.json({ playerBalances, transactions });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
