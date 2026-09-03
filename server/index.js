@@ -15,15 +15,15 @@ app.get('/api/health', (req, res) => {
 
 const db = require('./db');
 
-app.post('/api/sessions', (req, res) => {
+app.post('/api/sessions', requireAuth, (req, res) => {
   const { name } = req.body;
-  const stmt = db.prepare('INSERT INTO sessions (name) VALUES (?)');
-  const result = stmt.run(name);
+  const stmt = db.prepare('INSERT INTO sessions (user_id, name) VALUES (?, ?)');
+  const result = stmt.run(req.userId, name);
   res.json({ id: result.lastInsertRowid, name });
 });
 
-app.get('/api/sessions', (req, res) => {
-  const sessions = db.prepare('SELECT * FROM sessions').all();
+app.get('/api/sessions', requireAuth, (req, res) => {
+  const sessions = db.prepare('SELECT * FROM sessions WHERE user_id = ?').all(req.userId);
   res.json(sessions);
 });
 
@@ -65,6 +65,22 @@ app.post('/api/login', async (req, res) => {
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
   res.json({ token, email: user.email });
 });
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+}
 
 app.get('/api/sessions/:id/players', (req, res) => {
   const sessionId = req.params.id;
