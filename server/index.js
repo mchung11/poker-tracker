@@ -36,6 +36,14 @@ app.post('/api/players/:id/buyins', (req, res) => {
   res.json({ id: result.lastInsertRowid, playerId, amount });
 });
 
+app.post('/api/players/:id/cashout', (req, res) => {
+  const playerId = req.params.id;
+  const { amount } = req.body;
+  const stmt = db.prepare('INSERT INTO cash_outs (player_id, amount) VALUES (?, ?)');
+  const result = stmt.run(playerId, amount);
+  res.json({ id: result.lastInsertRowid, playerId, amount });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
