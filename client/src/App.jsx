@@ -121,7 +121,7 @@ function SessionDetail({ session, onBack }) {
 
   return (
     <div>
-      <button onClick={onBack}>← Back to Sessions</button>
+      <button className="back-button" onClick={onBack}>← Back to Sessions</button>
       <h1>{session.name}</h1>
 
       <h2>Players</h2>
@@ -148,11 +148,11 @@ function SessionDetail({ session, onBack }) {
       <h3>Settle Up</h3>
       <button onClick={handleSettle}>Calculate Settlement</button>
       {settleResult && (
-        <div>
+        <div className="transactions">
           <h4>Transactions:</h4>
           <ul>
             {settleResult.transactions.map((t, i) => (
-              <li key={i}>{t.from} pays {t.to} ${t.amount}</li>
+              <li key={i} className="transaction-item">{t.from} pays {t.to} ${t.amount}</li>
             ))}
           </ul>
         </div>
