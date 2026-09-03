@@ -28,6 +28,14 @@ app.post('/api/sessions/:id/players', (req, res) => {
   res.json({ id: result.lastInsertRowid, sessionId, name });
 });
 
+app.post('/api/players/:id/buyins', (req, res) => {
+  const playerId = req.params.id;
+  const { amount } = req.body;
+  const stmt = db.prepare('INSERT INTO buy_ins (player_id, amount) VALUES (?, ?)');
+  const result = stmt.run(playerId, amount);
+  res.json({ id: result.lastInsertRowid, playerId, amount });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
