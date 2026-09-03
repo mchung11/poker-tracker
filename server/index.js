@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = 'poker-tracker-dev-secret';
 const app = express();
 const PORT = 3001;
 
@@ -31,6 +33,37 @@ app.post('/api/sessions/:id/players', (req, res) => {
   const stmt = db.prepare('INSERT INTO players (session_id, name) VALUES (?, ?)');
   const result = stmt.run(sessionId, name);
   res.json({ id: result.lastInsertRowid, sessionId, name });
+});
+
+app.post('/api/signup', async (req, res) => {
+  const { email, password } = req.body;
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  try {
+    const stmt = db.prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
+    const result = stmt.run(email, passwordHash);
+    res.json({ id: result.lastInsertRowid, email });
+  } catch (err) {
+    res.status(400).json({ error: 'Email already in use' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  const validPassword = await bcrypt.compare(password, user.password_hash);
+  if (!validPassword) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, email: user.email });
 });
 
 app.get('/api/sessions/:id/players', (req, res) => {
