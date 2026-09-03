@@ -20,6 +20,11 @@ app.post('/api/sessions', (req, res) => {
   res.json({ id: result.lastInsertRowid, name });
 });
 
+app.get('/api/sessions', (req, res) => {
+  const sessions = db.prepare('SELECT * FROM sessions').all();
+  res.json(sessions);
+});
+
 app.post('/api/sessions/:id/players', (req, res) => {
   const sessionId = req.params.id;
   const { name } = req.body;
