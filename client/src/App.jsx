@@ -11,110 +11,112 @@ function App() {
   const [authError, setAuthError] = useState('')
 
   useEffect(() => {
-  if (token) {
-    fetchSessions()
-  }
-}, [token])
+    if (token) {
+      fetchSessions()
+    }
+  }, [token])
 
   function fetchSessions() {
-  fetch('http://localhost:3001/api/sessions', {
-    headers: { 'Authorization': `Bearer ${token}` }
-  })
-    .then(res => res.json())
-    .then(data => setSessions(data))
-}
-
-function handleCreateSession() {
-  fetch('http://localhost:3001/api/sessions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({ name: newSessionName })
-  })
-    .then(res => res.json())
-    .then(() => {
-      setNewSessionName('')
-      fetchSessions()
+    fetch('http://localhost:3001/api/sessions', {
+      headers: { 'Authorization': `Bearer ${token}` }
     })
-}
+      .then(res => res.json())
+      .then(data => setSessions(data))
+  }
+
+  function handleCreateSession() {
+    fetch('http://localhost:3001/api/sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name: newSessionName })
+    })
+      .then(res => res.json())
+      .then(() => {
+        setNewSessionName('')
+        fetchSessions()
+      })
+  }
 
   function handleSignup() {
-  fetch('http://localhost:3001/api/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: authEmail, password: authPassword })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        setAuthError(data.error)
-      } else {
-        handleLogin()
-      }
+    fetch('http://localhost:3001/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: authEmail, password: authPassword })
     })
-}
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setAuthError(data.error)
+        } else {
+          handleLogin()
+        }
+      })
+  }
 
-function handleLogin() {
-  fetch('http://localhost:3001/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: authEmail, password: authPassword })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        setAuthError(data.error)
-      } else {
-        localStorage.setItem('token', data.token)
-        setToken(data.token)
-        setAuthError('')
-      }
+  function handleLogin() {
+    fetch('http://localhost:3001/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: authEmail, password: authPassword })
     })
-}
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          setAuthError(data.error)
+        } else {
+          localStorage.setItem('token', data.token)
+          setToken(data.token)
+          setAuthError('')
+        }
+      })
+  }
 
-function handleLogout() {
-  localStorage.removeItem('token')
-  setToken(null)
-}
+  function handleLogout() {
+    localStorage.removeItem('token')
+    setToken(null)
+  }
 
-if (!token) {
-  return (
-    <div>
-      <h1>Poker Tracker</h1>
-      <h2>Log In or Sign Up</h2>
-      {authError && <p style={{ color: 'red' }}>{authError}</p>}
-      <input
-        type="email"
-        value={authEmail}
-        onChange={(e) => setAuthEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <input
-        type="password"
-        value={authPassword}
-        onChange={(e) => setAuthPassword(e.target.value)}
-        placeholder="Password"
-      />
-      <div className="new-item-row">
-        <button onClick={handleLogin}>Log In</button>
-        <button onClick={handleSignup}>Sign Up</button>
+  if (!token) {
+    return (
+      <div>
+        <h1>Poker Tracker</h1>
+        <h2>Log In or Sign Up</h2>
+        {authError && <p style={{ color: 'red' }}>{authError}</p>}
+        <input
+          type="email"
+          value={authEmail}
+          onChange={(e) => setAuthEmail(e.target.value)}
+          placeholder="Email"
+        />
+        <input
+          type="password"
+          value={authPassword}
+          onChange={(e) => setAuthPassword(e.target.value)}
+          placeholder="Password"
+        />
+        <div className="new-item-row">
+          <button onClick={handleLogin}>Log In</button>
+          <button onClick={handleSignup}>Sign Up</button>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
+
   // If a session is selected, show the detail view instead of the list
   if (selectedSession) {
     return (
       <SessionDetail
         session={selectedSession}
         onBack={() => setSelectedSession(null)}
+        token={token}
       />
     )
   }
 
-  // Otherwise, show the session list (same as before)
+  // Otherwise, show the session list
   return (
     <div>
       <h1>Poker Tracker</h1>
@@ -122,7 +124,7 @@ if (!token) {
       <h2>Sessions</h2>
       <ul>
         {sessions.map(session => (
-          <li key={session.id}>
+          <li key={session.id} className="session-list-item">
             <button onClick={() => setSelectedSession(session)}>
               {session.name}
             </button>
@@ -138,12 +140,16 @@ if (!token) {
         placeholder="Session name"
       />
       <button onClick={handleCreateSession}>Create Session</button>
+
+      <div style={{ marginTop: '40px' }}>
+        <button className="back-button" onClick={handleLogout}>Log Out</button>
+      </div>
     </div>
   )
 }
 
 // A separate component for the session detail screen
-function SessionDetail({ session, onBack }) {
+function SessionDetail({ session, onBack, token }) {
   const [players, setPlayers] = useState([])
   const [newPlayerName, setNewPlayerName] = useState('')
   const [settleResult, setSettleResult] = useState(null)
@@ -153,8 +159,9 @@ function SessionDetail({ session, onBack }) {
   }, [])
 
   function fetchPlayers() {
-    // We don't have a "get players for session" route yet -- we'll add it
-    fetch(`http://localhost:3001/api/sessions/${session.id}/players`)
+    fetch(`http://localhost:3001/api/sessions/${session.id}/players`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => setPlayers(data))
   }
@@ -162,7 +169,10 @@ function SessionDetail({ session, onBack }) {
   function handleAddPlayer() {
     fetch(`http://localhost:3001/api/sessions/${session.id}/players`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ name: newPlayerName })
     })
       .then(res => res.json())
@@ -175,7 +185,10 @@ function SessionDetail({ session, onBack }) {
   function handleBuyIn(playerId, amount) {
     fetch(`http://localhost:3001/api/players/${playerId}/buyins`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ amount: Number(amount) })
     }).then(() => alert('Buy-in logged'))
   }
@@ -183,13 +196,18 @@ function SessionDetail({ session, onBack }) {
   function handleCashOut(playerId, amount) {
     fetch(`http://localhost:3001/api/players/${playerId}/cashout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({ amount: Number(amount) })
     }).then(() => alert('Cash-out logged'))
   }
 
   function handleSettle() {
-    fetch(`http://localhost:3001/api/sessions/${session.id}/settle`)
+    fetch(`http://localhost:3001/api/sessions/${session.id}/settle`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => setSettleResult(data))
   }
