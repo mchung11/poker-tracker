@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+const API_URL = import.meta.env.VITE_API_URL
+
 function App() {
   const [sessions, setSessions] = useState([])
   const [newSessionName, setNewSessionName] = useState('')
@@ -17,7 +19,7 @@ function App() {
   }, [token])
 
   function fetchSessions() {
-    fetch('http://localhost:3001/api/sessions', {
+    fetch(`${API_URL}/api/sessions`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -25,7 +27,7 @@ function App() {
   }
 
   function handleCreateSession() {
-    fetch('http://localhost:3001/api/sessions', {
+    fetch(`${API_URL}/api/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,7 +43,7 @@ function App() {
   }
 
   function handleSignup() {
-    fetch('http://localhost:3001/api/signup', {
+    fetch(`${API_URL}/api/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: authEmail, password: authPassword })
@@ -57,7 +59,7 @@ function App() {
   }
 
   function handleLogin() {
-    fetch('http://localhost:3001/api/login', {
+    fetch(`${API_URL}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: authEmail, password: authPassword })
@@ -105,7 +107,6 @@ function App() {
     )
   }
 
-  // If a session is selected, show the detail view instead of the list
   if (selectedSession) {
     return (
       <SessionDetail
@@ -116,7 +117,6 @@ function App() {
     )
   }
 
-  // Otherwise, show the session list
   return (
     <div>
       <h1>Poker Tracker</h1>
@@ -148,7 +148,6 @@ function App() {
   )
 }
 
-// A separate component for the session detail screen
 function SessionDetail({ session, onBack, token }) {
   const [players, setPlayers] = useState([])
   const [newPlayerName, setNewPlayerName] = useState('')
@@ -159,7 +158,7 @@ function SessionDetail({ session, onBack, token }) {
   }, [])
 
   function fetchPlayers() {
-    fetch(`http://localhost:3001/api/sessions/${session.id}/players`, {
+    fetch(`${API_URL}/api/sessions/${session.id}/players`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -167,7 +166,7 @@ function SessionDetail({ session, onBack, token }) {
   }
 
   function handleAddPlayer() {
-    fetch(`http://localhost:3001/api/sessions/${session.id}/players`, {
+    fetch(`${API_URL}/api/sessions/${session.id}/players`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -183,7 +182,7 @@ function SessionDetail({ session, onBack, token }) {
   }
 
   function handleBuyIn(playerId, amount) {
-    fetch(`http://localhost:3001/api/players/${playerId}/buyins`, {
+    fetch(`${API_URL}/api/players/${playerId}/buyins`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -194,7 +193,7 @@ function SessionDetail({ session, onBack, token }) {
   }
 
   function handleCashOut(playerId, amount) {
-    fetch(`http://localhost:3001/api/players/${playerId}/cashout`, {
+    fetch(`${API_URL}/api/players/${playerId}/cashout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -205,7 +204,7 @@ function SessionDetail({ session, onBack, token }) {
   }
 
   function handleSettle() {
-    fetch(`http://localhost:3001/api/sessions/${session.id}/settle`, {
+    fetch(`${API_URL}/api/sessions/${session.id}/settle`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -254,7 +253,6 @@ function SessionDetail({ session, onBack, token }) {
   )
 }
 
-// A small component for one player's row -- has its own input state for amounts
 function PlayerRow({ player, onBuyIn, onCashOut }) {
   const [buyInAmount, setBuyInAmount] = useState('')
   const [cashOutAmount, setCashOutAmount] = useState('')
