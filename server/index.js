@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 3001;
-const JWT_SECRET = 'poker-tracker-dev-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'poker-tracker-dev-secret';
 
 app.use(cors());
 app.use(express.json());
